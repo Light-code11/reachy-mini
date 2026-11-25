@@ -12,6 +12,14 @@ There are three modes:
 
 Stop any mode with **Ctrl+C** in the start window, or `./scripts/stop.sh` from any terminal. Always stop him before you power Reachy off or unplug him.
 
+## Try the Field Desk on Windows
+
+Download or clone the repository, then open `field-desk/index.html` in your browser. You can try the demo without a robot, Python or an API key.
+
+Choose up to two modes and click **Start preview**. For example, **Greeter** and **Translator** welcome a guest in English and Spanish. Type `sample` in the operator console for another scripted exchange, or `help` to see the commands.
+
+If the Reachy Mini daemon is running on the same computer on port 8000, click **Mirror local Reachy** to follow the robot’s movements on screen. The mirror only reads its pose. To run live voice or move the physical robot, use the event app described below.
+
 ## Setup (once)
 
 You need macOS, Python 3.12, `ffmpeg` (`brew install ffmpeg`), a Reachy Mini Lite and an OpenAI API key.

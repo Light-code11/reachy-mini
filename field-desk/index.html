@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F1F0EC">
+  <title>Reachy · Field Desk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{color-scheme:dark;--bg:#0F172A;--paper:#1B2336;--paper-2:#272F42;--ink:#F8FAFC;--muted:#B2BDCE;--line:#475569;--green:#22C55E;--green-dark:#0F172A;--red:#EF4444;--terminal:#0B1120;--terminal-text:#F8FAFC;font:16px/1.5 "Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;font-synthesis:none;text-rendering:optimizeLegibility}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);min-width:320px}.app{max-width:1160px;margin:0 auto;padding:0 36px 42px}.topbar{height:70px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:10px;font-weight:550;letter-spacing:-.03em}.brand-mark{display:grid;place-items:center;width:42px;height:34px;overflow:hidden}.brand-mark img{display:block;width:42px;height:34px;object-fit:contain}.top-right{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px}.status-led{width:8px;height:8px;background:var(--red);border-radius:50%}.top-right[data-state="ready"] .status-led{background:var(--green)}
+    main{padding-top:32px}.heading{display:grid;grid-template-columns:170px minmax(0,1fr) auto;align-items:center;gap:24px;margin-bottom:30px;padding:18px 24px;background:linear-gradient(110deg,#1B2336 0%,#202B40 100%);border:1px solid #39465D;border-radius:18px;min-height:180px}.hero-logo{width:160px;height:112px;object-fit:contain;filter:drop-shadow(0 10px 22px #0005)}.eyebrow{color:#A5CBB0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}h1{font-size:clamp(28px,3.8vw,40px);line-height:1.12;letter-spacing:-.05em;font-weight:600;margin:0}.lede{color:var(--muted);margin-top:9px;max-width:480px}.connection-button{background:transparent;color:var(--ink);border:1px solid #607089;border-radius:9px;min-height:44px;padding:9px 15px;font:inherit;font-size:14px;cursor:pointer;white-space:nowrap;transition:background-color .2s ease,border-color .2s ease}.connection-button:hover{background:var(--paper)}
+    .main-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(270px,.75fr);gap:18px}.workbench,.readiness{background:var(--paper);border:1px solid var(--line);border-radius:15px}.workbench{padding:22px 24px 20px}.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:19px}.section-head h2{font-size:15px;font-weight:600;letter-spacing:-.01em;margin:0}.small-label{color:var(--muted);font-size:13px}.mode-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.mode{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left;gap:4px;border:1px solid var(--line);background:var(--paper-2);color:var(--ink);border-radius:12px;min-height:80px;padding:12px 14px;font:inherit;font-size:14px;cursor:pointer;transition:background-color .2s ease,border-color .2s ease,transform .2s ease}.mode:hover{transform:translateY(-1px);border-color:#789086}.mode[aria-pressed="true"]{background:#263C38;border-color:#6EAA8A;box-shadow:inset 0 0 0 1px #6EAA8A}.mode-title{font-weight:600}.mode-detail{color:var(--muted);font-size:12px;line-height:1.35}.mode:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--green);outline-offset:2px}.mode-desc{min-height:26px;margin-top:13px;color:var(--muted);font-size:14px}.divider{height:1px;background:var(--line);margin:18px 0}.actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.button{border:1px solid var(--line);border-radius:8px;min-height:44px;padding:9px 16px;background:transparent;color:var(--ink);font:inherit;font-size:14px;cursor:pointer;transition:filter .2s ease}.button:disabled{opacity:.55;cursor:not-allowed}.button.primary{background:var(--green);border-color:var(--green);color:var(--green-dark);font-weight:600}.button.stop{margin-left:auto;color:var(--red)}.button:not(:disabled):hover{filter:brightness(.96)}.hint{font-size:13px;color:var(--muted);margin-top:12px}
+    .readiness{padding:22px 21px}.readiness h2{font-size:15px;font-weight:550;margin:0 0 5px}.check-caption{color:var(--muted);font-size:13px;margin-bottom:12px}.check{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:14px}.check .value{display:flex;align-items:center;gap:7px;color:var(--muted);font:12px "Fira Code",monospace}.check .value::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}.value.wait{color:var(--muted)}.value.fail{color:#FF8A80}.value.ok{color:var(--green)}
+    .console{margin-top:19px;background:var(--terminal);border-radius:12px;color:var(--terminal-text);overflow:hidden}.console-top{height:46px;padding:0 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ffffff1c;color:#B2BDCE;font:12px "Fira Code",monospace;letter-spacing:.04em;text-transform:uppercase}.console-top button{border:0;background:transparent;color:#B2BDCE;font:inherit;letter-spacing:0;text-transform:none;cursor:pointer;padding:7px 9px;min-height:40px}.console-top button:hover{color:#fff}.console-content{padding:13px 17px 15px}.log{height:72px;overflow:auto;font:12px/1.65 "Fira Code",ui-monospace,Consolas,monospace;color:#d4ddd5}.log-line{white-space:pre-wrap}.prompt{color:#86EFAC}.response{color:#B2BDCE}.error{color:#FF8A80}.command-form{display:flex;gap:10px;align-items:center;border-top:1px solid #ffffff1c;padding-top:12px;margin-top:10px;font:13px "Fira Code",ui-monospace,Consolas,monospace}.command-form label{color:#86EFAC;white-space:nowrap}.command-form input{border:0;outline:none;min-width:0;flex:1;background:transparent;color:#f1f5f1;font:inherit}.command-form input::placeholder{color:#B2BDCE}.send{border:1px solid #ffffff32;border-radius:6px;background:#ffffff0d;color:#e4ebe5;padding:5px 11px;min-height:40px;font:inherit;cursor:pointer}.send:hover{background:#ffffff1c}.examples{color:#B2BDCE;font:12px/1.5 "Fira Code",ui-monospace,Consolas,monospace;margin-top:9px}
+    .footer{display:flex;justify-content:space-between;gap:14px;margin-top:15px;color:var(--muted);font-size:12px}.footer a{color:inherit;text-decoration:none}.footer a:hover{text-decoration:underline}
+    .app{padding:0 14px 25px}.topbar{height:60px}.top-right{font-size:12px}main{padding-top:24px}.heading{grid-template-columns:74px minmax(0,1fr);gap:12px;padding:15px}.hero-logo{width:74px;height:74px}.heading h1{font-size:27px}.connection-button{grid-column:1/-1;justify-self:start}.main-grid{grid-template-columns:1fr}.mode-list{grid-template-columns:1fr}.mode{min-height:64px}.section-head{align-items:flex-start;flex-direction:column;gap:4px}.workbench,.readiness{padding:19px}.button.stop{margin-left:0}.console-content{padding:12px}.footer{flex-direction:column}
+    @media(min-width:521px){.app{padding:0 20px 32px}.topbar{height:66px}.heading{grid-template-columns:116px minmax(0,1fr);gap:16px;padding:18px}.hero-logo{width:112px;height:90px}.heading h1{font-size:clamp(30px,4vw,40px)}.connection-button{grid-column:2}.mode-list{grid-template-columns:repeat(3,minmax(0,1fr))}.mode{min-height:80px}.section-head{align-items:center;flex-direction:row;gap:12px}.workbench{padding:22px 24px 20px}.readiness{padding:22px 21px}.button.stop{margin-left:auto}.footer{flex-direction:row}}
+    @media(min-width:761px){.app{padding:0 36px 42px}.topbar{height:70px}main{padding-top:32px}.heading{grid-template-columns:170px minmax(0,1fr) auto;gap:24px;padding:18px 24px;min-height:180px}.hero-logo{width:160px;height:112px}.main-grid{grid-template-columns:minmax(0,1.35fr) minmax(270px,.75fr);gap:18px}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+    /* Reachy Field Desk: editorial product page, grounded in Reachy's own silhouette and orange joints. */
+    :root{color-scheme:light;--bg:#f1f0ec;--paper:transparent;--paper-2:#e8e6e1;--ink:#1b1b1a;--muted:#666763;--line:#c9c8c2;--green:#df6c3b;--green-dark:#fffaf6;--red:#bd4a3a;--terminal:#20211f;--terminal-text:#f4f2ee}
+    body{background:var(--bg);color:var(--ink)}
+    .app{max-width:1320px}
+    .topbar{border-color:var(--line)}
+    .brand{font-size:15px;letter-spacing:-.04em}.brand-mark{width:36px;height:31px}.brand-mark img{width:36px;height:31px}
+    .topnav{display:flex;gap:28px;margin-left:auto;margin-right:34px}.topnav a{font-size:12px;letter-spacing:.02em;color:var(--muted);text-decoration:none}.topnav a:hover{color:var(--ink)}
+    .top-right{font-size:12px;color:var(--ink)}.status-led{background:var(--red)}
+    main{padding-top:0}
+    .heading{position:relative;display:grid;grid-template-columns:minmax(300px,.85fr) minmax(380px,1.15fr);grid-template-rows:1fr auto;gap:0 26px;align-items:center;margin:0;padding:38px 0 24px;min-height:510px;background:none;border:0;border-radius:0;overflow:hidden}
+    .hero-logo{grid-column:2;grid-row:1/3;justify-self:center;width:min(100%,600px);height:465px;object-fit:contain;filter:none;mix-blend-mode:multiply}
+    .heading>div{grid-column:1;grid-row:1;align-self:center;z-index:1}
+    .eyebrow{color:#c85a30;font-size:11px;letter-spacing:.17em;margin-bottom:22px}
+    h1{max-width:620px;font-size:clamp(52px,7.1vw,104px);line-height:.92;letter-spacing:-.085em;font-weight:500}
+    .lede{color:#555651;margin-top:23px;max-width:360px;font-size:16px;line-height:1.65}
+    .connection-button{grid-column:1;grid-row:2;justify-self:start;align-self:start;border:0;border-bottom:1px solid var(--ink);border-radius:0;padding:8px 0;min-height:44px;color:var(--ink);font-size:13px}.connection-button:hover{background:transparent;color:#c85a30;border-color:#c85a30}
+    .main-grid{grid-template-columns:minmax(0,1.45fr) minmax(260px,.55fr);gap:54px;align-items:start;padding:17px 0 23px;border-top:1px solid var(--line)}
+    .workbench,.readiness{background:transparent;border:0;border-radius:0;padding:12px 0}
+    .section-head{margin-bottom:20px}.section-head h2,.readiness h2{font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600}.small-label,.check-caption{font-size:12px;color:var(--muted)}
+    .mode-list{gap:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+    .mode{position:relative;min-height:76px;border:0;border-radius:0;background:transparent;color:var(--ink);padding:12px 18px 12px 0;transition:color .18s ease}
+    .mode+.mode{border-left:1px solid var(--line);padding-left:18px}
+    .mode:hover{transform:none;color:#c85a30;border-color:var(--line);background:transparent}
+    .mode[aria-pressed="true"]{background:transparent;border-color:var(--line);box-shadow:none;color:#b94e26}
+    .mode[aria-pressed="true"]:after{position:absolute;content:"";height:3px;background:#d96735;left:0;right:18px;bottom:0}
+    .mode-title{font-size:14px}.mode-detail{color:var(--muted);font-size:12px}
+    .mode:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #cc6033;outline-offset:3px}
+    .mode-desc{min-height:25px;margin-top:12px;color:#555651;font-size:13px}
+    .divider{background:var(--line);margin:16px 0}
+    .button{border-radius:2px;border-color:#b8b7b1;color:var(--ink)}.button.primary{background:#d96735;border-color:#d96735;color:white}.button.primary:hover{background:#bf542a}.button.stop{color:#a74637}
+    .hint{font-size:12px;color:var(--muted)}
+    .readiness{border-left:1px solid var(--line);padding:12px 0 12px 26px}
+    .readiness h2{margin-bottom:5px}.check-caption{margin-bottom:14px}
+    .check{border-color:var(--line);font-size:13px;padding:9px 0}.check .value{font-size:11px}.value.ok{color:#4d815c}.value.fail{color:#b84e3a}
+    .console{margin-top:16px;border-radius:2px;background:var(--terminal)}.console-top{border-color:#ffffff24;color:#c9c9c2}.console-top i{font-style:normal;color:#ed966e;margin-left:8px}.console-top button{color:#c9c9c2}.console-content{padding:13px 18px 16px}.log{height:60px}.examples{color:#a9aaa4}.prompt{color:#ef9a70}.response{color:#c5c7bf}.error{color:#f39a88}.command-form label{color:#ef9a70}.send{border-radius:2px}
+    .footer{font-size:11px;color:var(--muted)}
+    @media(max-width:760px){.topnav{gap:16px;margin-right:16px}.heading{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto;gap:0;padding:35px 0 12px;min-height:0}.heading>div{grid-column:1;grid-row:1}.heading h1{font-size:clamp(55px,12vw,82px)}.lede{font-size:14px;margin-top:16px}.hero-logo{grid-column:1;grid-row:2;width:100%;height:min(78vw,390px);margin:5px auto 0}.connection-button{grid-column:1;grid-row:3;margin-top:0}.main-grid{grid-template-columns:1fr;gap:18px;padding-top:17px}.readiness{border-left:0;border-top:1px solid var(--line);padding:20px 0 8px}.mode-list{grid-template-columns:1fr}.mode{min-height:60px;padding:10px 8px}.mode+.mode{border-left:0;border-top:1px solid var(--line);padding-left:8px}.mode[aria-pressed="true"]:after{right:0}.workbench{padding:10px 0}.section-head{flex-direction:row;align-items:center}.button.stop{margin-left:auto}}
+    @media(max-width:520px){.topnav{gap:12px;margin-right:10px}.topnav a{font-size:11px}.top-right{font-size:10px;gap:6px}.brand{gap:6px;font-size:13px}.brand-mark{width:29px}.brand-mark img{width:29px}.app{padding-left:16px;padding-right:16px}.heading{padding-top:28px}.heading h1{font-size:57px}.hero-logo{height:300px}.section-head .small-label{display:none}.check{font-size:12px}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+    /* Keep the full control surface inside the viewport. */
+    html,body{height:100%;overflow:hidden}
+    body{min-height:0}
+    .app{height:100svh;min-height:0;display:flex;flex-direction:column;padding-bottom:10px}
+    .topbar{flex:0 0 54px;height:54px}
+    main{flex:1;min-height:0;display:grid;grid-template-rows:minmax(220px,1fr) minmax(190px,.86fr) minmax(142px,.62fr) 15px;gap:9px;padding-top:0}
+    .heading{min-height:0;height:100%;padding:8px 0;grid-template-columns:minmax(260px,.85fr) minmax(0,1.15fr)}
+    .robot-art {
+      position: relative;
+      grid-column: 2;
+      grid-row: 1 / 3;
+      place-self: center;
+      width: min(100%, 490px);
+      height: min(100%, 340px);
+      margin: 0;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+      color: var(--muted);
+    }
+    .robot-art svg { display: block; width: 100%; height: 100%; min-height: 0; }
+    .viewer-bar {
+      text-align: center;
+      padding: 6px 0;
+      font-size: 12px; line-height: 1.25;
+    }
+    #viewSource { display: inline-flex; gap: 6px; align-items: center; }
+    #viewSource::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #747087; }
+    .robot-art[data-live] #viewSource::before { background: #456649; }
+    .ready-offline[data-live="true"] { color: #456649; }
+    .portrait-toggle {
+      appearance: none;
+      display: block;
+      justify-self: center;
+      max-width: 100%;
+      min-height: 0;
+      height: 100%;
+      aspect-ratio: 1220 / 1740;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+    .portrait-toggle:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; border-radius: 8px; }
+    @media (max-width: 760px) {
+      .viewer-bar { margin-inline: 6px; font-size: 10px; }
+    }
+    .main-grid{min-height:0;height:100%;grid-template-columns:minmax(0,1.45fr) minmax(250px,.55fr);padding:8px 0;gap:40px}
+    .workbench,.readiness{min-height:0;padding:5px 0}
+    .section-head{margin-bottom:12px}
+    .mode{min-height:62px}
+    .mode-desc{margin-top:8px}
+    .divider{margin:10px 0}
+    .hint{margin-top:7px}
+    .console{min-height:0;height:100%;margin:0;display:flex;flex-direction:column}
+    .console-top{height:38px;min-height:38px}
+    .console-content{min-height:0;flex:1;padding:8px 16px 9px;display:flex;flex-direction:column}
+    .log{height:auto;min-height:28px;flex:1}
+    .command-form{margin-top:6px;padding-top:6px}
+    .examples{margin-top:4px}
+    .footer{align-items:center;margin-top:0;font-size:10px;white-space:nowrap;overflow:hidden}
+    @media(max-height:760px){.topbar{flex-basis:46px;height:46px}main{grid-template-rows:minmax(168px,1fr) minmax(165px,.9fr) minmax(112px,.62fr) 13px;gap:6px}.heading{padding:3px 0}.main-grid{gap:24px;padding:5px 0}.section-head{margin-bottom:8px}.mode{min-height:52px}.mode-detail{font-size:11px}.mode-desc{margin-top:6px;font-size:12px}.divider{margin:7px 0}.readiness{padding-top:3px}.check-caption{margin-bottom:6px}.check{padding:6px 0}.console-top{height:33px;min-height:33px}.console-content{padding:6px 14px}.log{min-height:20px}.command-form{padding-top:4px;margin-top:4px}.examples{font-size:10px}}
+    @media(max-height:640px) and (min-width:761px){main{grid-template-rows:minmax(128px,.8fr) minmax(145px,.9fr) minmax(94px,.62fr) 11px;gap:4px}.mode{min-height:43px}.mode-desc{min-height:16px;font-size:11px}.check{padding:4px 0}.console-top{height:28px;min-height:28px}.examples{display:none}}
+    @media(max-width:760px){
+      .app{padding-left:18px;padding-right:18px}
+      .topbar{flex-basis:48px;height:48px}
+      main{grid-template-rows:minmax(165px,.9fr) minmax(300px,1.45fr) minmax(120px,.7fr) 14px;gap:7px}
+      .heading{grid-template-columns:minmax(0,1.2fr) minmax(108px,.8fr);grid-template-rows:1fr auto;gap:0 6px;padding:6px 0}
+      .heading>.hero-copy{grid-column:1;grid-row:1;align-self:center}
+      .eyebrow{font-size:9px;letter-spacing:.12em;margin-bottom:8px}
+      .heading h1{font-size:clamp(38px,8vw,56px);line-height:.96}
+      .lede{font-size:12px;line-height:1.35;margin-top:8px}
+      .robot-art{grid-column:2;grid-row:1/3;height:100%;max-height:205px;max-width:100%;align-self:center}
+      .connection-button{grid-column:1;grid-row:2;margin:0;min-height:34px;font-size:11px}
+      .main-grid{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;gap:4px;padding:4px 0}
+      .workbench{padding:2px 0}.readiness{border:0;border-top:1px solid var(--line);padding:6px 0 0}
+      .section-head{flex-direction:row;align-items:center;margin-bottom:6px}.section-head h2,.readiness h2{font-size:10px}.section-head .small-label{display:block;font-size:10px}
+      .mode-list{grid-template-columns:repeat(3,minmax(0,1fr))}.mode{min-height:48px;padding:5px 7px}.mode+.mode{border-top:0;border-left:1px solid var(--line);padding-left:7px}.mode-title{font-size:12px}.mode-detail{font-size:10px}.mode[aria-pressed="true"]:after{right:0}
+      .mode-desc{font-size:11px;min-height:18px;margin:5px 0}.divider{margin:6px 0}.actions{gap:7px}.button{min-height:36px;padding:5px 11px;font-size:12px}.hint{font-size:10px;margin-top:4px}
+      .check-caption{display:none}.readiness{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;column-gap:12px}.readiness h2{grid-column:1/-1;margin:0}.readiness .check{display:grid;width:auto;padding:5px 0;font-size:10px;grid-template-columns:1fr auto}.readiness .check:nth-of-type(2){border-top:0}
+      .console-top{height:32px;min-height:32px;font-size:10px}.console-content{padding:5px 10px}.log{font-size:10px}.command-form{font-size:11px}.command-form input{font-size:11px}.send{min-height:32px}.examples{font-size:9px}
+      .footer{font-size:9px;gap:6px}
+    }
+    @media(max-height:700px){main{grid-template-rows:minmax(145px,.8fr) minmax(285px,1.5fr) minmax(105px,.68fr) 12px;gap:5px}.heading h1{font-size:clamp(34px,7.5vw,48px)}.robot-art{max-height:170px}.topbar{flex-basis:42px;height:42px}}
+    @media(max-width:760px) and (max-height:760px){main{grid-template-rows:minmax(128px,.68fr) minmax(270px,1.48fr) minmax(92px,.56fr) 11px;gap:4px}.robot-art{max-height:145px}.heading h1{font-size:clamp(32px,7.3vw,44px)}.mode{min-height:42px}.mode-desc{font-size:10px;min-height:16px}.readiness .check{padding:3px 0}.console-top{height:28px;min-height:28px}.examples{display:none}}
+    .ready-panel {
+      min-width: 0;
+      padding: 5px 0 5px clamp(16px, 1.9vw, 26px);
+      border-inline-start: 1px solid var(--line);
+    }
+    .ready-heading, .service-list > div {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .ready-heading { margin-bottom: 10px; }
+    .ready-heading h2 {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .ready-offline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #8b412a;
+      font-size: 12px;
+    }
+    .ready-offline::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .service-list { margin: 0; }
+    .service-list > div {
+      border-top: 1px solid var(--line);
+      padding-block: clamp(4px, .85vh, 9px);
+      font-size: 13px;
+    }
+    .service-list dd { margin: 0; color: #565852; font-size: 12px; }
+    @media (max-width: 760px) {
+      .ready-panel { padding: 6px 0 0; border: 0; border-top: 1px solid var(--line); }
+      .ready-heading { margin-bottom: 4px; }
+      .service-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; }
+      .service-list > div { flex-wrap: wrap; gap: 0 5px; padding-block: 3px; font-size: 12px; }
+      .service-list dd { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar"><div class="brand"><span class="brand-mark"><img src="reachy-face-logo.png" alt="" aria-hidden="true"></span><span>Reachy <span style="color:var(--muted);font-weight:400">Mini</span></span></div><nav class="topnav" aria-label="Page sections"><a href="#modes">Modes</a><a href="#console">Console</a></nav><div class="top-right" id="topStatus" data-state="offline" aria-live="polite"><span class="status-led"></span><span id="topStatusText">Offline · no robot service</span></div></header>
+    <main>
+      <div class="heading">
+        <figure class="robot-art">
+          <button class="portrait-toggle" id="portraitMotion" type="button" aria-label="Pause Reachy animation" title="Pause Reachy animation" aria-describedby="viewSource">
+          <svg viewBox="-160 -45 1220 1740" aria-hidden="true" focusable="false">
+            <defs>
+              <radialGradient id="bodyCeramic" cx=".32" cy=".27" r=".85">
+                <stop stop-color="#f5f4fb"/><stop offset=".48" stop-color="#d9d9e5"/>
+                <stop offset=".81" stop-color="#ababbd"/><stop offset="1" stop-color="#808293"/>
+              </radialGradient>
+              <linearGradient id="footFinish">
+                <stop stop-color="#262835"/><stop offset=".35" stop-color="#515364"/>
+                <stop offset=".76" stop-color="#333544"/><stop offset="1" stop-color="#20222b"/>
+              </linearGradient>
+              <radialGradient id="groundShade">
+                <stop stop-color="#191a21" stop-opacity=".23"/><stop offset="1" stop-color="#191a21" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="headPorcelain" cx="46%" cy="38%" r="72%" gradientTransform="translate(0 .04) scale(1 .96)">
+                <stop stop-color="#fafafd"/>
+                <stop offset=".64" stop-color="#e7e7ec"/>
+                <stop offset=".87" stop-color="#d2d2d8"/>
+                <stop offset="1" stop-color="#b1b2b8"/>
+              </radialGradient>
+              <linearGradient id="antennaMetal">
+                <stop stop-color="#191a1d"/>
+                <stop offset=".32" stop-color="#55565d"/>
+                <stop offset=".57" stop-color="#303136"/>
+                <stop offset="1" stop-color="#141518"/>
+              </linearGradient>
+              <linearGradient id="lensBezel" x2="0%" y2="100%">
+                <stop stop-color="#85858b"/>
+                <stop offset=".15" stop-color="#303036"/>
+                <stop offset=".7" stop-color="#08090b"/>
+                <stop offset="1" stop-color="#4c4d52"/>
+              </linearGradient>
+              <g id="antennaShaft" fill="url(#antennaMetal)" stroke="#222326" stroke-width="1.5">
+                <rect x="-7" y="93" width="14" height="360" rx="6"/>
+                <rect x="-15" y="79" width="30" height="50" rx="14"/>
+                <rect x="-18" y="299" width="36" height="64" rx="11"/>
+                <path d="M-14 311 H14 M-15 321 H15 M-15 331 H15 M-15 341 H15 M-14 351 H14"
+                      fill="none" stroke="#67686d" stroke-width="2.5"/>
+              </g>
+              <clipPath id="lensGlass">
+                <circle cx="326" cy="658" r="80"/>
+                <circle cx="584" cy="658" r="67"/>
+              </clipPath>
+            </defs>
+            <ellipse cx="450" cy="1564" rx="452" ry="62" fill="url(#groundShade)"/>
+            <path d="M167 1470 Q450 1425 733 1470 L718 1530 Q712 1570 450 1575
+                     Q189 1570 182 1530 Z" fill="url(#footFinish)"/>
+            <path d="M371 804 Q450 780 529 804 L546 945 H354 Z" fill="url(#footFinish)"/>
+            <g id="torsoPose">
+              <path d="M447 852 C583 848 647 892 696 992
+                       C750 1108 792 1333 769 1444 Q763 1493 716 1509
+                       C614 1545 280 1547 181 1509 Q135 1494 129 1444
+                       C110 1296 145 1103 201 986 C248 890 311 852 447 852 Z"
+                    fill="url(#bodyCeramic)" stroke="#9799a8" stroke-width="3"/>
+              <g id="shoulderDetails" fill="#76798b">
+                <path d="M213 984 Q239 916 294 883 Q283 920 251 965 Q225 998 213 984 Z"/>
+                <path d="M685 984 Q659 916 604 883 Q615 920 647 965 Q673 998 685 984 Z"/>
+              </g>
+              <path d="M129 1306 Q448 1348 773 1306" fill="none" stroke="#9597a6" stroke-opacity=".52" stroke-width="3"/>
+            </g>
+            <g id="headPose">
+              <g id="antennaMounts">
+                <g transform="translate(219 0)"><use id="leftAntenna" href="#antennaShaft"/></g>
+                <g transform="translate(681 0)"><use id="rightAntenna" href="#antennaShaft"/></g>
+                <g fill="url(#antennaMetal)">
+                <rect x="201" y="441" width="36" height="62" rx="7"/>
+                <rect x="663" y="441" width="36" height="62" rx="7"/>
+                </g>
+              </g>
+              <path id="headShell" d="M449 454 C559 454 622 453 673 475
+                       C733 503 754 551 754 620 L754 695
+                       C754 783 715 828 621 830
+                       Q451 834 281 830 C188 828 145 786 145 697
+                       L145 620 C145 552 166 507 222 478 C274 454 338 454 449 454 Z"
+                    fill="url(#headPorcelain)" stroke="#b9bac0" stroke-width="2.5"/>
+              <g id="faceplate">
+                <rect x="398" y="647" width="130" height="22" rx="6" fill="#191a1c"/>
+                <path d="M403 651 H525" stroke="#65656a" stroke-width="2.5"/>
+                <g fill="url(#lensBezel)">
+                  <circle cx="326" cy="658" r="86"/>
+                  <circle cx="584" cy="658" r="73"/>
+                </g>
+                <image href="reachy-full-robot.png" width="956" height="1645" clip-path="url(#lensGlass)"/>
+              </g>
+            </g>
+          </svg>
+          </button>
+          <figcaption class="viewer-bar">
+            <span id="viewSource" aria-live="polite">Demo motion</span>
+          </figcaption>
+        </figure>
+        <div class="hero-copy"><div class="eyebrow">REACHY MINI / FIELD DESK</div><h1 id="headline">Welcome, in two languages.</h1><div class="lede" id="subhead">Pair two roles for Reachy to try in one session.</div></div>
+        <button class="connection-button" id="checkConnection" type="button">Mirror local Reachy</button>
+      </div>
+      <div class="main-grid" id="modes">
+        <section class="workbench" aria-labelledby="modeTitle">
+          <div class="section-head">
+            <h2 id="modeTitle">Choose up to two modes</h2>
+            <span class="small-label" id="modeCount">2 of 2 selected</span>
+          </div>
+          <div class="mode-list" role="group" aria-labelledby="modeTitle" aria-describedby="modeCount"><button class="mode" type="button" data-mode="greeter" aria-pressed="true"><span class="mode-title">Greeter</span><span class="mode-detail">Welcome guests</span></button><button class="mode" type="button" data-mode="translator" aria-pressed="true"><span class="mode-title">Translator</span><span class="mode-detail">Bridge two languages</span></button><button class="mode" type="button" data-mode="compliment" aria-pressed="false"><span class="mode-title">Compliments</span><span class="mode-detail">Notice a detail</span></button></div>
+          <div class="mode-desc" id="modeDescription" aria-live="polite">Welcome a guest in English and Spanish.</div>
+          <div class="divider"></div>
+          <div class="actions"><button class="button primary" id="startButton" type="button" aria-describedby="startHint">Start preview</button><button class="button stop" id="stopButton" type="button" disabled>Stop preview</button></div>
+          <div class="hint" id="startHint" role="status">Try a scripted exchange in the console.</div>
+        </section>
+        <aside class="ready-panel" aria-labelledby="readinessTitle">
+          <header class="ready-heading">
+            <h2 id="readinessTitle">Ready check</h2>
+            <span class="ready-offline" id="readyState">Offline</span>
+          </header>
+          <dl class="service-list">
+            <div><dt>Robot pose</dt><dd id="poseStatus">Disconnected</dd></div>
+            <div><dt>Camera</dt><dd>Unchecked</dd></div>
+            <div><dt>Audio</dt><dd>Unchecked</dd></div>
+            <div><dt>Voice service</dt><dd>Unchecked</dd></div>
+          </dl>
+        </aside>
+      </div>
+      <section class="console" id="console" aria-label="Reachy command console"><div class="console-top"><span>Operator console <i>LOCAL</i></span><button type="button" id="clearConsole" aria-label="Clear console output">Clear</button></div><div class="console-content"><div class="log" id="consoleLog" role="log" aria-live="polite" aria-relevant="additions text"><div class="log-line response">Ready for a local mode preview.</div></div><form class="command-form" id="commandForm"><label for="commandInput">reachy ›</label><input id="commandInput" name="command" autocomplete="off" spellcheck="false" placeholder="Try: help" aria-label="Enter a Reachy command"><button class="send" type="submit">Run</button></form><div class="examples">help&nbsp; · &nbsp;status&nbsp; · &nbsp;mode greeter translator&nbsp; · &nbsp;start&nbsp; · &nbsp;sample&nbsp; · &nbsp;stop</div></div></section>
+      <div class="footer"><span>Local control · no telemetry sent by this prototype</span><span id="sessionLabel">No session running</span></div>
+    </main>
+  </div>
+  <script src="portrait-motion.js"></script>
+  <script>
+    (()=>{
+      const buttons = [...document.querySelectorAll('.mode[data-mode]')];
+      const modeNames = buttons.map(button => button.dataset.mode);
+      const maxModes = 2;
+      let selected = buttons.filter(button => button.getAttribute('aria-pressed') === 'true')
+        .map(button => button.dataset.mode);
+      let running = false;
+      let exchange = 0;
+      const roleCopy = {
+        '': ['What shall we try?', 'Select one or two roles to build a preview.'],
+        greeter: ['A warm hello, every time.', 'Welcome a visitor to OpenAI DevDay.'],
+        translator: ['So everyone is heard.', 'Try a sample exchange in English and Spanish.'],
+        compliment: ['Notice the little things.', 'Offer a guest a friendly compliment.'],
+        'greeter+translator': ['Welcome, in two languages.', 'Welcome a guest in English and Spanish.'],
+        'greeter+compliment': ['A personal welcome.', 'Greet a visitor and offer a compliment in the same reply.'],
+        'translator+compliment': ['Kind words travel.', 'Offer a compliment and translate it into Spanish.']
+      };
+      const sampleLines = {
+        greeter: [
+          ['Welcome to OpenAI DevDay!', '¡Te damos la bienvenida al DevDay de OpenAI!'],
+          ['Hello! Which demo would you like to see?', '¡Hola! ¿Qué demostración te gustaría ver?']
+        ],
+        compliment: [
+          ['I like the robot pin on your badge.', 'Me gusta el pin de robot que llevas en la credencial.'],
+          ['That was a thoughtful question.', 'Has hecho una pregunta muy interesante.']
+        ],
+        translator: [
+          ['Where is the demo room?', '¿Dónde está la sala de demostraciones?'],
+          ['The next talk starts at noon.', 'La próxima charla empieza al mediodía.']
+        ]
+      };
+      const $=id=>document.getElementById(id), log=$('consoleLog');
+      function print(text,kind='response'){const row=document.createElement('div');row.className=`log-line ${kind}`;row.textContent=text;log.append(row);log.scrollTop=log.scrollHeight}
+      const viewer = animateReachyPortrait(document.querySelector('.robot-art'));
+      const connection = createPoseConnection(viewer, (state, message) => {
+        const live = state === 'live';
+        const connecting = state === 'connecting';
+        $('topStatus').dataset.state = live ? 'ready' : 'offline';
+        $('topStatusText').textContent = live ? 'Live · pose mirror' : connecting ? 'Connecting…' : 'Offline · demo motion';
+        $('readyState').textContent = live ? 'Pose only' : connecting ? 'Connecting' : 'Offline';
+        $('readyState').dataset.live = String(live);
+        $('poseStatus').textContent = live ? 'Receiving' : connecting ? 'Connecting' : 'Disconnected';
+        $('checkConnection').textContent = live ? 'Disconnect mirror' : connecting ? 'Cancel connection' : 'Mirror local Reachy';
+        print(message);
+      });
+
+      function selectedLabel() {
+        return buttons.filter(button => selected.includes(button.dataset.mode))
+          .map(button => button.querySelector('.mode-title').textContent).join(' + ') || 'None';
+      }
+
+      function renderModes() {
+        const [headline, description] = roleCopy[selected.join('+')];
+        buttons.forEach(button => button.setAttribute('aria-pressed', String(selected.includes(button.dataset.mode))));
+        $('headline').textContent = headline;
+        $('modeDescription').textContent = description;
+        $('modeCount').textContent = `${selected.length} of ${maxModes} ${running ? 'on' : 'selected'}`;
+        $('startButton').disabled = running || !selected.length;
+        $('stopButton').disabled = !running;
+        $('sessionLabel').textContent = running ? 'Preview · ' + selectedLabel() : 'No session running';
+        $('startHint').textContent = running ? 'Type sample for another exchange.' : 'Try a scripted exchange in the console.';
+      }
+
+      function playSample() {
+        const contentRoles = selected.filter(mode => mode !== 'translator');
+        if (!contentRoles.length) contentRoles.push('translator');
+        const lines = contentRoles.map(role => sampleLines[role][exchange % sampleLines[role].length]);
+        const english = lines.map(([en]) => en).join(' ');
+        const spanish = lines.map(([, es]) => es).join(' ');
+        print(selectedLabel() + ' › ' + english + (selected.includes('translator') ? '\nES › ' + spanish : ''));
+        exchange++;
+        viewer.acknowledgeSelection();
+      }
+
+      function applyModes(requested) {
+        if (requested.some(mode => !modeNames.includes(mode))) {
+          return print('Choose greeter, translator or compliment.', 'error');
+        }
+        const next = modeNames.filter(mode => requested.includes(mode));
+        if (next.length > maxModes) {
+          const message = 'Choose up to two modes. Turn one off to make room.';
+          $('startHint').textContent = message;
+          return print(message, 'error');
+        }
+        selected = next;
+        if (running && !selected.length) {
+          running = false;
+          print('Preview stopped.');
+        }
+        renderModes();
+        if (running) playSample();
+        else print('Selected modes: ' + selectedLabel());
+      }
+
+      buttons.forEach(button => button.addEventListener('click', () => {
+        const mode = button.dataset.mode;
+        applyModes(selected.includes(mode) ? selected.filter(id => id !== mode) : [...selected, mode]);
+      }));
+      renderModes();
+      function command(raw) {
+        const c = raw.trim().toLowerCase();
+        if (!c) return;
+        print(`reachy › ${raw}`, 'prompt');
+        if (c === 'help') return print('Set one or two roles: mode greeter translator. Names: greeter, translator, compliment. Clear with mode none. Preview: start, sample, stop. Inspect with status.');
+        if (c === 'status') {
+          const source = connection.connected ? 'live pose mirror' : 'offline demo';
+          return print(`Viewer: ${source} · modes: ${selectedLabel()} · preview: ${running ? 'running' : 'stopped'}.`);
+        }
+        if (c.startsWith('mode ')) {
+          const roles = c.slice(5).trim();
+          if (roles === 'none') return applyModes([]);
+          const names = roles.split(/[\s,+]+/).filter(Boolean)
+            .map(name => name === 'compliments' ? 'compliment' : name);
+          if (!names.length) return print('Use mode greeter translator, or mode none.', 'error');
+          return applyModes(names);
+        }
+        if (c === 'start') {
+          if (running) return print('Preview already running. Type sample for another exchange.');
+          if (!selected.length) return print('Select at least one mode first.', 'error');
+          running = true;
+          exchange = 0;
+          renderModes();
+          return playSample();
+        }
+        if (c === 'sample') {
+          if (!running) return print('Start a preview first.', 'error');
+          return playSample();
+        }
+        if (c === 'stop') {
+          if (!running) return print('No session is active.', 'error');
+          running = false;
+          renderModes();
+          return print('Preview stopped.');
+        }
+        print('Command not recognized. Type help to see available commands.', 'error');
+      }
+      $('commandForm').addEventListener('submit',e=>{e.preventDefault();const field=$('commandInput');command(field.value);field.value=''});
+      $('clearConsole').addEventListener('click',()=>{log.replaceChildren();print('Console cleared.')});
+      $('checkConnection').addEventListener('click', connection.toggle);
+      $('startButton').addEventListener('click',()=>command('start'));$('stopButton').addEventListener('click',()=>command('stop'));
+      window.addEventListener('online',()=>print('Browser network restored. Retry the connection check.'));window.addEventListener('offline',()=>print('Browser is offline.','error'));
+    })();
+  </script>
+</body>
+</html>
