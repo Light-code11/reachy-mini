@@ -8,7 +8,9 @@ There are three modes:
 |---|---|---|
 | **Greeter** | `./scripts/start.sh` | Checks guests in from their Luma ticket QR code, welcomes them by first name, gives the odd outfit compliment and answers questions about the event. |
 | **Compliment** | `./scripts/start.sh compliment` | Compliments everyone who walks up, with a specific detail ("Love that black jacket!"). |
-| **Translator** | `./scripts/start.sh translator` | Relays a conversation between two people on his left and right, each in their own language. |
+| **Translator** | `./scripts/start.sh translator` | Relays a conversation between two people on his left and right, each in their own language. A live transcript, always with English, is at http://127.0.0.1:8780. |
+
+**Control panel (in progress).** `./scripts/panel.sh` opens buttons at http://127.0.0.1:8790 to start any mode, stop Reachy, see the startup checks and open the live transcript. Known issue: starting from the panel currently crashes the robot software (a GStreamer plugin error), so start Reachy with `./scripts/start.sh` for now. The panel's Stop button and status work.
 
 Stop any mode with **Ctrl+C** in the start window, or `./scripts/stop.sh` from any terminal. Always stop him before you power Reachy off or unplug him.
 
@@ -21,6 +23,7 @@ git clone https://github.com/Light-code11/reachy-mini.git && cd reachy-mini
 python3.12 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 cp .env.example .env        # then put your OPENAI_API_KEY in .env
+./scripts/get_phone_model.sh   # optional: YOLO11n (~11 MB) so Reachy keeps a held-up phone centred at check-in
 ```
 
 `.env` is git-ignored. Never commit it.

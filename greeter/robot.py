@@ -5,6 +5,7 @@ import asyncio
 import logging
 import math
 import random
+import time
 from typing import Any, Callable
 
 import httpx
@@ -74,13 +75,13 @@ class Moves:
         try:
             for yaw in SEARCH_YAWS_DEG:
                 await asyncio.to_thread(
-                    self._mini.goto_target, head=_pose(yaw=yaw), antennas=np.deg2rad([20, -20]),
+                    self._goto, head=_pose(yaw=yaw), antennas=np.deg2rad([20, -20]),
                     body_yaw=float(np.deg2rad(yaw)), duration=0.7,
                 )
                 if await asyncio.to_thread(found):
                     log.info("search: found someone at %d deg", yaw)
                     return True  # stay facing them; tracking takes over
-            await asyncio.to_thread(self._mini.goto_target, head=_pose(), antennas=[0.0, 0.0], body_yaw=0.0, duration=0.8)
+            await asyncio.to_thread(self._goto, head=_pose(), antennas=[0.0, 0.0], body_yaw=0.0, duration=0.8)
             log.info("search: nobody found")
             return False
         finally:
@@ -94,32 +95,37 @@ class Moves:
         """
         if side == self._side:
             return
-        sign = SIDE_SIGN[side]
         await self._tracking(False)
+        turned = False
         try:
-            spot = self._spots.get(side)
-            if spot is not None:
-                await self._turn_body(spot)
-                if self.sees_face is None or await self._look():
-                    log.info("turned to %s (%.0f deg)", side, spot)
-                    return
-                log.info("%s person moved from %.0f deg; looking again", side, spot)
-            if self.sees_face is None:
-                await self._turn_body(sign * SIDE_DEFAULT_DEG)
-                return
-            for deg in SIDE_SWEEP_DEG:
-                yaw = sign * deg
-                await self._turn_body(yaw, duration=0.4)
-                if await self._look():
-                    self._spots[side] = yaw
-                    log.info("turned to %s: found someone at %.0f deg", side, yaw)
-                    return
-            self._spots.pop(side, None)
-            await self._turn_body(sign * SIDE_DEFAULT_DEG)
-            log.info("turned to %s: nobody found, waiting at %d deg", side, sign * SIDE_DEFAULT_DEG)
+            await self._face_side(side)
+            turned = True
         finally:
-            self._side = side
+            self._side = side if turned else None  # after a failed turn, turn again next time
             await self._tracking(True)
+
+    async def _face_side(self, side: str) -> None:
+        sign = SIDE_SIGN[side]
+        spot = self._spots.get(side)
+        if spot is not None:
+            await self._turn_body(spot)
+            if self.sees_face is None or await self._look():
+                log.info("turned to %s (%.0f deg)", side, spot)
+                return
+            log.info("%s person moved from %.0f deg; looking again", side, spot)
+        if self.sees_face is None:
+            await self._turn_body(sign * SIDE_DEFAULT_DEG)
+            return
+        for deg in SIDE_SWEEP_DEG:
+            yaw = sign * deg
+            await self._turn_body(yaw, duration=0.4)
+            if await self._look():
+                self._spots[side] = yaw
+                log.info("turned to %s: found someone at %.0f deg", side, yaw)
+                return
+        self._spots.pop(side, None)
+        await self._turn_body(sign * SIDE_DEFAULT_DEG)
+        log.info("turned to %s: nobody found, waiting at %d deg", side, sign * SIDE_DEFAULT_DEG)
 
     async def dance(self, name: str | None = None) -> str:
         """A random dance from Pollen's reachy_mini_dances_library (never the same one twice in a row)."""
@@ -138,11 +144,27 @@ class Moves:
             for i in range(reps):
                 await asyncio.to_thread(self._mini.play_move, move, initial_goto_duration=0.5 if i == 0 else 0.0,
                                         sound=False)
-            await asyncio.to_thread(self._mini.goto_target, head=_pose(), antennas=[0.0, 0.0], body_yaw=0.0,
+            await asyncio.to_thread(self._goto, head=_pose(), antennas=[0.0, 0.0], body_yaw=0.0,
                                     duration=0.6)
         finally:
             await self._tracking(True)
         return name
+
+    def _goto(self, **kwargs) -> None:
+        """goto_target, retried once: the robot software sometimes rejects a move ("time value is out of range")."""
+        try:
+            self._mini.goto_target(**kwargs)
+        except Exception as e:
+            log.warning("move rejected (%s); retrying once", e)
+            time.sleep(0.1)
+            self._mini.goto_target(**kwargs)
+
+    async def point_head(self, yaw_deg: float, pitch_deg: float, duration: float = 0.25) -> None:
+        """Aim the head (phone lock). Body stays put; head tracking should already be off."""
+        await asyncio.to_thread(self._goto, head=_pose(yaw=yaw_deg, pitch=pitch_deg), duration=duration)
+
+    async def set_tracking(self, enabled: bool) -> None:
+        await self._tracking(enabled)
 
     def forget_sides(self) -> None:
         """New conversation: forget where the two people were standing."""
@@ -152,7 +174,7 @@ class Moves:
     async def _turn_body(self, yaw_deg: float, duration: float = 0.6) -> None:
         # Head pose is in the room's frame, not the body's: turn it too, or the camera keeps facing forward.
         await asyncio.to_thread(
-            self._mini.goto_target, head=_pose(yaw=yaw_deg), antennas=[0.0, 0.0],
+            self._goto, head=_pose(yaw=yaw_deg), antennas=[0.0, 0.0],
             body_yaw=float(np.deg2rad(yaw_deg)), duration=duration,
         )
         await asyncio.sleep(0.4)  # let him settle and the camera catch up before looking
@@ -168,7 +190,7 @@ class Moves:
         await self._tracking(False)
         try:
             for kwargs, duration in steps:
-                await asyncio.to_thread(self._mini.goto_target, duration=duration, **kwargs)
+                await asyncio.to_thread(self._goto, duration=duration, **kwargs)
         finally:
             await self._tracking(True)
 

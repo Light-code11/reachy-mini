@@ -110,6 +110,7 @@ class RealtimeVoice:
         self._last_activity = -1e9
         self.on_guest_speech: Callable[[], None] | None = None
         self.on_transcript: Callable[[str], None] | None = None
+        self.on_reply_transcript: Callable[[str], None] | None = None  # what Reachy said (not forced lines)
         self._muted = False
         self._in_rate = mini.media.get_input_audio_samplerate()
         self._out_rate = mini.media.get_output_audio_samplerate()
@@ -279,6 +280,9 @@ class RealtimeVoice:
                 if not self._forced_active:
                     self.note_activity()
                 self._play(base64.b64decode(event.delta))
+            elif t == "response.output_audio_transcript.done":
+                if self.on_reply_transcript and not self._forced_active and event.response_id not in self._discarded:
+                    self.on_reply_transcript(getattr(event, "transcript", "") or "")
             elif t == "response.done":
                 self._on_response_done(event.response)
             elif t == "response.function_call_arguments.done":

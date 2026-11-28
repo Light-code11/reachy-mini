@@ -9,3 +9,4 @@ vendor/
 docs/reel-script.md
 .DS_Store
 .pytest_cache/
+models/

@@ -204,3 +204,24 @@ async def test_dance_plays_a_library_move_long_enough_then_resets():
     assert played == [("chicken_peck", 0.5, False), ("chicken_peck", 0.0, False), ("chicken_peck", 0.0, False), "reset"]
     other = await m.dance()
     assert other != "chicken_peck"
+
+
+async def test_rejected_move_is_retried_and_a_failed_turn_is_not_remembered():
+    from greeter.robot import Moves
+    calls = {"n": 0}
+    class Flaky:
+        def goto_target(self, **kw):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise Exception("Task failed with error: time value is out of range [0,1]")
+    m = Moves(Flaky(), "http://127.0.0.1:1")
+    await m.turn_to("right")  # first goto rejected, retry works
+    assert m._side == "right" and calls["n"] == 2
+
+    class Broken:
+        def goto_target(self, **kw): raise Exception("time value is out of range [0,1]")
+    m = Moves(Broken(), "http://127.0.0.1:1")
+    import pytest
+    with pytest.raises(Exception):
+        await m.turn_to("left")
+    assert m._side is None  # so the next turn_to("left") really turns

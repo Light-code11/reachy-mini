@@ -1,7 +1,7 @@
 // Isolated-world script: turns Luma scanner results into /scan events for Reachy.
 // DEBUG = true also records page text and raw API bodies to /debug (contains guest data; logs/ only).
 const DEBUG = false;
-const { parseScanResponse, classifySeenCode, isScannerPage } = globalThis.ReachyParse;
+const { parseScanResponse, classifySeenCode, isScannerPage, describeCode } = globalThis.ReachyParse;
 const send = (msg) => { try { chrome.runtime.sendMessage(msg); } catch (_) {} };
 
 window.addEventListener("message", (e) => {
@@ -23,6 +23,7 @@ window.addEventListener("message", (e) => {
   } else if (d.type === "seen") {
     if (DEBUG) send({ type: "debug", text: `SEEN ${d.luma ? "luma" : "other"} ${d.text}` });
     if (!d.luma && classifySeenCode(d.text) === "wrong_code") send({ type: "scan", kind: "wrong_code", name: null });
+    else if (!d.luma) send({ type: "debug", text: `SEEN non-ticket code: ${describeCode(d.text)}` });
   } else if (d.type === "debug") {
     send({ type: "debug", text: d.text });
   }

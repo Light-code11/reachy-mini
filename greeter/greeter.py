@@ -48,6 +48,10 @@ class Greeter:
         self._last_scan_at = -math.inf
         self.on_qr_prompt: Callable[[float], None] | None = None
 
+    @property
+    def last_scan_at(self) -> float:
+        return self._last_scan_at
+
     async def handle_scan(self, r: ScanResult) -> None:
         if r.kind == "express_off":
             if r.at - self._express_warned_at >= 60.0:

@@ -21,10 +21,12 @@ from greeter.compliment import crop_below_face, rate_outfit, suggest_compliment
 from greeter.config import Settings, load_settings
 from greeter.event_info import build_instructions, fetch_event_text
 from greeter.greeter import Greeter
+from greeter.phone import PhoneLock, head_yaw_pitch, load_detector
 from greeter.robot import Moves
 from greeter.server import make_app, start_server
 from greeter.speech import SpeechQueue
 from greeter.tools import TOOLS, make_tool_handler, rate_fit
+from greeter.transcript import Line, TranscriptBoard, is_english, label_line, make_transcript_app, side_for
 from greeter.translator import SETUP_PROMPT, TRANSLATOR_TOOLS, TranslatorState, build_translator_instructions, make_translator_handler
 from greeter.voice import RealtimeVoice
 
@@ -57,9 +59,12 @@ async def face_loop(settings: Settings, greeter: Greeter, presence: dict) -> Non
             await asyncio.sleep(0.2)
 
 
-async def scan_loop(queue: asyncio.Queue[ScanResult], greeter: Greeter) -> None:
+async def scan_loop(queue: asyncio.Queue[ScanResult], greeter: Greeter, on_scan=None) -> None:
     while True:
-        await greeter.handle_scan(await queue.get())
+        result = await queue.get()
+        if on_scan:
+            on_scan()
+        await greeter.handle_scan(result)
 
 
 async def run_translator(settings: Settings) -> None:
@@ -88,11 +93,61 @@ async def run_translator(settings: Settings) -> None:
         async def act_sad() -> None:
             await moves.sad()
 
-        handler = make_translator_handler(state, moves, act_sad, lambda text: voice_ref[0].update_instructions(text))
+        board = TranscriptBoard()
+        openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
+
+        def update_instructions(text: str) -> None:
+            voice_ref[0].update_instructions(text)
+            if (state.left, state.right) != (board.languages["left"], board.languages["right"]):
+                if not state.left and not state.right:
+                    board.clear()  # "new conversation"
+                board.set_languages(state.left, state.right)
+
+        handler = make_translator_handler(state, moves, act_sad, update_instructions)
         voice = RealtimeVoice(settings, mini, build_translator_instructions(state), TRANSLATOR_TOOLS, handler,
                               half_duplex=True, max_output_tokens=4096,  # audio counts too
                               noise_reduction="near_field", vad_threshold=0.7)  # ignore the room, hear the two people
         voice_ref.append(voice)
+
+        in_order = asyncio.Lock()  # lines appear in the order they were said (waiters are first come, first served)
+
+        async def show(text: str, reachy: bool) -> None:
+            text = text.strip()
+            if len(text.strip(" .,!?。、")) < 2:
+                return  # noise like "Hm."
+            to = moves._side if reachy else None  # he turns to the listener before speaking
+            async with in_order:
+                await _show(text, reachy, to)
+
+        async def _show(text: str, reachy: bool, to: str | None) -> None:
+            language, english = await label_line(openai_client, settings.compliment_model, text)
+            if is_english(language):
+                english = text
+            who = "reachy" if reachy else side_for(language, state.left, state.right)
+            board.add(Line(who=who, text=text, english=english, language=language, to=to))
+
+        voice.on_transcript = lambda text: asyncio.get_running_loop().create_task(show(text, reachy=False))
+        voice.on_reply_transcript = lambda text: asyncio.get_running_loop().create_task(show(text, reachy=True))
+        async def set_languages_from_page(left: str | None, right: str | None) -> None:
+            state.left, state.right = left, right
+            log.info("translator: languages set on the page: left %s, right %s", left, right)
+            update_instructions(build_translator_instructions(state))
+            if state.ready:
+                await voice.prompt(
+                    f"The host just set the languages on screen: left person {left}, right person {right}. "
+                    "Briefly tell each person, in their own language, that you'll translate for them now, then carry on."
+                )
+
+        async def reset_from_page() -> None:
+            state.left = state.right = None
+            moves.forget_sides()
+            log.info("translator: reset from the page")
+            update_instructions(build_translator_instructions(state))
+            await voice.prompt(SETUP_PROMPT)
+
+        page = await start_server(make_transcript_app(board, set_languages_from_page, reset_from_page),
+                                  settings.transcript_port)
+        log.info("transcript page on http://127.0.0.1:%d", settings.transcript_port)
 
         async def start_setup() -> None:
             for _ in range(50):  # the camera takes a few seconds to start; don't sweep blind
@@ -108,6 +163,7 @@ async def run_translator(settings: Settings) -> None:
         try:
             await voice.run()
         finally:
+            await page.cleanup()
             try:
                 async with httpx.AsyncClient(timeout=3.0) as client:
                     await client.post(f"{settings.daemon_url}/api/media/tracking/disable")
@@ -245,7 +301,8 @@ async def amain() -> None:
 
         voice = RealtimeVoice(settings, mini, instructions, TOOLS, make_tool_handler(rate_current_fit, act_sad, lambda: look_at_me()))
         speech = SpeechQueue(voice.say_exact)
-        greeter = Greeter(speech, Moves(mini, settings.daemon_url), CheckinGate(), ArrivalPrompter(), get_compliment,
+        moves = Moves(mini, settings.daemon_url)
+        greeter = Greeter(speech, moves, CheckinGate(), ArrivalPrompter(), get_compliment,
                           event_name=settings.event_name)
         greeter_ref.append(greeter)
 
@@ -258,7 +315,25 @@ async def amain() -> None:
 
         presence = {"face": False}
 
+        # A phone held up (YOLO): stop following faces and keep the phone centred, so small or bright codes read.
+        phone_detector = load_detector(ROOT / "models" / "yolo11n.onnx")
+        phone_lock = None
+        if phone_detector is not None:
+            phone_lock = PhoneLock(
+                phone_detector.detect,
+                mini.media.get_frame,  # in memory only, never saved
+                moves.point_head,
+                moves.set_tracking,
+                lambda text: speech.put(text, max_age_s=8.0),
+                lambda: greeter.last_scan_at,
+                busy=lambda: greeter.moving,
+                read_head=lambda: head_yaw_pitch(mini),
+            )
+            log.info("phone lock on")
+
         def heard_someone() -> None:
+            if phone_lock is not None and phone_lock.locked:
+                return  # someone's holding up their phone: don't turn away to look for a voice
             if not presence["face"] and not greeter.moving:  # a voice, but nobody in view: go find them
                 asyncio.get_running_loop().create_task(greeter.find_person(sees_face, time.monotonic(), auto=True))
 
@@ -271,7 +346,9 @@ async def amain() -> None:
         log.info("greeter ready on http://127.0.0.1:%d", settings.server_port)
         try:
             await asyncio.gather(
-                voice.run(), speech.run(), scan_loop(scans, greeter), face_loop(settings, greeter, presence)
+                voice.run(), speech.run(), face_loop(settings, greeter, presence),
+                scan_loop(scans, greeter, on_scan=phone_lock.note_scan if phone_lock else None),
+                *([phone_lock.run()] if phone_lock else []),
             )
         finally:
             await runner.cleanup()

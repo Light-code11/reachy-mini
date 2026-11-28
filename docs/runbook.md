@@ -5,6 +5,12 @@ Event: Codex Community Meetup | Melbourne (Reachy says "OpenAI Dev Day"), Sat 21
 
 Everything runs on the host MacBook with Reachy plugged in by USB **and** its own power adapter.
 
+## Control panel (buttons instead of commands)
+
+**Known issue: don't use the panel's Start buttons yet.** Starting from the panel crashes the robot software (a GStreamer plugin error). Start with `./scripts/start.sh` as usual; the panel's Stop button and status are fine.
+
+Run `cd ~/Projects/reachy-mini && ./scripts/panel.sh` once and leave the window open. The panel opens at http://127.0.0.1:8790. It shows whether Reachy's USB is connected and whether he's running. It has a Start button for each mode (check-in, compliments, translator), a Stop button, the startup checks as they happen, and a link to the live transcript in translator mode. Closing the panel doesn't stop Reachy; use its Stop button or `./scripts/stop.sh`.
+
 ## Quick start (does steps 2, 3 and 5 below, and checks each one)
 
 ```
@@ -59,6 +65,7 @@ Reachy compliments each new person who walks up about a second after he sees the
 Reachy can also work as a polite interpreter between two people who don't share a language. None of the greeter features run in this mode: no check-ins, compliments or fit ratings, and no scanner tab needed.
 
 1. **Start:** `./scripts/start.sh translator`. Stop with `./scripts/stop.sh` (or Ctrl+C) as usual. Plain `./scripts/start.sh` is the normal greeter again.
+   **Live transcript:** open http://127.0.0.1:8780 on the Mac (or put it on a screen). It shows each person's words on their side, always with an English line underneath, plus what Reachy relayed. Languages show in the header. It clears on "new conversation".
 2. **Stand** one person on Reachy's **left**, the other on his **right**, both about an arm's length away.
 3. **Setup:** he turns left and asks that person which language they want, repeats it back ("Spanish, is that right?") and waits for a yes. Then he does the same on the right. If both choose the same language, he tells them they can talk directly and stays quiet unless spoken to.
 4. **Talk normally, one at a time.** After each person speaks, he turns to the other person and relays it in their language, for example "The gentleman is asking you…". Pause after each sentence or two so he can keep up.

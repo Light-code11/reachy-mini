@@ -57,3 +57,11 @@ test("only the scanner view (not list or guest pages) needs Express mode", () =>
   assert.equal(isScannerPage("/check-in/evt-ZLcgMdLTqHF8bK3/scan", "?tab=approved"), false);
   assert.equal(isScannerPage("/check-in/evt-ZLcgMdLTqHF8bK3", ""), false);
 });
+
+
+test("describeCode never logs a code's contents", () => {
+  const d = ReachyParse.describeCode("https://wallet.example.com/pass/abc123secret?pk=g-xyz");
+  assert.ok(d.startsWith("https://wallet.example.com/pass"), d);
+  assert.ok(!d.includes("abc123secret") && !d.includes("g-xyz"), d);
+  assert.equal(ReachyParse.describeCode("GUEST-12345"), "plain text (11 chars)");
+});

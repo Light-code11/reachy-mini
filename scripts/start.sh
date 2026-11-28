@@ -95,6 +95,7 @@ echo
 if [ "$MODE" = translator ]; then
   echo "Reachy is ready as a translator. Stand on his left and right; he'll ask each of you your language."
   echo "Say \"Reachy, new conversation\" to start over with new people."
+  echo "Live transcript (with English): http://127.0.0.1:8780"
 elif [ "$MODE" = compliment ]; then
   echo "Reachy is ready to compliment everyone he sees."
   echo "Say \"Reachy, be quiet\" to silence him, and \"Reachy, wake up\" to bring him back."

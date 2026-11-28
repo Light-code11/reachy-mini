@@ -26,6 +26,17 @@
     return /\/check-in\/[^/]+\/scan\/?$/.test(pathname || "") && !/[?&]tab=/.test(search || "");
   }
 
-  root.ReachyParse = { parseScanResponse, classifySeenCode, isScannerPage };
+  // What kind of QR it was, without its contents (so a ticket token never lands in the log).
+  function describeCode(text) {
+    text = text || "";
+    try {
+      const u = new URL(text);
+      return `${u.protocol}//${u.host}${u.pathname.split("/").slice(0, 2).join("/")}… (${text.length} chars)`;
+    } catch (_) {
+      return `plain text (${text.length} chars)`;
+    }
+  }
+
+  root.ReachyParse = { parseScanResponse, classifySeenCode, isScannerPage, describeCode };
   if (typeof module !== "undefined") module.exports = root.ReachyParse;
 })(typeof globalThis !== "undefined" ? globalThis : this);

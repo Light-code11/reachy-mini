@@ -36,6 +36,17 @@
   const SHOW_MS = 1500;      // how long the clean copy is shown
   const REPEAT_MS = 20000;   // don't re-show the same code within this window (limits automatic re-reads)
   const DETECT_EVERY_MS = 50;   // check for a code ~20x a second
+  // Ask the camera for 4K (Reachy's camera does 3840x2160). Luma still gets a normal ~1080p picture, but every
+  // other check reads the middle of the frame at full 4K detail, so small codes (Apple Wallet passes) have
+  // twice the pixels. Turn off with localStorage.reachyHiRes = "0". If 4K isn't available, nothing changes.
+  const HI_RES = ls("reachyHiRes", "1") !== "0";
+  const OUT_MAX_W = 1920;
+  function withHighRes(constraints) {
+    if (!HI_RES || !constraints || !constraints.video) return null;
+    const video = constraints.video === true ? {} : { ...constraints.video };
+    video.width = { ideal: 3840 }; video.height = { ideal: 2160 };
+    return { ...constraints, video };
+  }
 
   function drawCleanCode(ctx, text, w, h) {
     const qr = qrcode(0, "M");
@@ -57,7 +68,13 @@
 
   const origGUM = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
   navigator.mediaDevices.getUserMedia = async (constraints) => {
-    const real = await origGUM(constraints);
+    let real = null;
+    const hi = withHighRes(constraints);
+    if (hi) {
+      try { real = await origGUM(hi); }
+      catch (err) { post({ type: "debug", text: `4K camera not available (${err && err.name}); using normal resolution` }); }
+    }
+    if (!real) real = await origGUM(constraints);
     try {
       return await buildPipeline(real);
     } catch (err) {
@@ -70,17 +87,30 @@
   async function buildPipeline(real) {
     const track = real.getVideoTracks()[0];
     if (!track) return real;
-    const { width = 1920, height = 1080 } = track.getSettings();
+    const { width: vw = 1920, height: vh = 1080 } = track.getSettings();
+    // What Luma sees: at most 1920 wide (a 4K canvas at 30 fps would make the scanner page sluggish).
+    const width = Math.min(vw, OUT_MAX_W), height = Math.round(vh * width / vw);
     const video = document.createElement("video");
     video.muted = true; video.playsInline = true; video.srcObject = real;
     await video.play();
     const canvas = document.createElement("canvas");
     canvas.width = width; canvas.height = height;
     const ctx = canvas.getContext("2d");
-    const sw = width / zoom, sh = height / zoom, sx = (width - sw) / 2, sy = (height - sh) / 2;
+    const sw = vw / zoom, sh = vh / zoom, sx = (vw - sw) / 2, sy = (vh - sh) / 2;
 
     const detector = enhance ? new BarcodeDetector({ formats: ["qr_code"] }) : null;
-    let detecting = false, lastDetect = 0;
+    let detecting = false, lastDetect = 0, pass = 0;
+    // "center" view: the middle of the camera frame at full sensor detail (only when the camera gave us more
+    // pixels than Luma's picture). Alternates with the normal "full" view.
+    const hasDetail = vw >= width * 1.5;
+    const view = document.createElement("canvas");
+    view.width = width; view.height = height;
+    const vctx = view.getContext("2d", { willReadFrequently: true });
+    const nextView = () => {
+      if (!hasDetail || pass++ % 2 === 0) return { name: "full", source: canvas };
+      vctx.drawImage(video, (vw - width) / 2, (vh - height) / 2, width, height, 0, 0, width, height);
+      return { name: "4K center", source: view };
+    };
     let overlay = null;              // {text, until}
     const shownAt = new Map();       // code -> last time shown
 
@@ -97,7 +127,8 @@
         overlay = null;
         if (detector && !detecting && now - lastDetect > DETECT_EVERY_MS) {
           detecting = true; lastDetect = now;
-          detector.detect(canvas).then((codes) => {
+          const v = nextView();
+          detector.detect(v.source).then((codes) => {
             for (const c of codes) {
               const text = c.rawValue || "";
               const t = performance.now();
@@ -112,6 +143,7 @@
               shownAt.set(text, t);
               overlay = { text, until: t + SHOW_MS };
               post({ type: "seen", text: text.replace(/pk=.*/, "pk=…"), luma: true });
+              post({ type: "debug", text: `read ticket via ${v.name} view` });
               break;
             }
           }).catch(() => {}).finally(() => { detecting = false; });
@@ -122,7 +154,7 @@
 
     const out = canvas.captureStream(30);
     const outTrack = out.getVideoTracks()[0];
-    outTrack.getSettings = () => ({ ...track.getSettings(), width, height });
+    outTrack.getSettings = () => ({ ...track.getSettings(), width, height });  // Luma's picture size
     // Camera controls (torch, focus, constraints) go to the real camera track.
     outTrack.getCapabilities = track.getCapabilities.bind(track);
     outTrack.getConstraints = track.getConstraints.bind(track);
@@ -130,7 +162,7 @@
     for (const a of real.getAudioTracks()) out.addTrack(a);
     const origStop = outTrack.stop.bind(outTrack);
     outTrack.stop = () => { origStop(); track.stop(); };
-    post({ type: "debug", text: `camera pipeline on: zoom x${zoom}, enhance=${enhance}, ${track.label} ${width}x${height}` });
+    post({ type: "debug", text: `camera pipeline on: zoom x${zoom}, enhance=${enhance}, ${track.label} camera ${vw}x${vh}, Luma sees ${width}x${height}` });
     return out;
   }
 })();

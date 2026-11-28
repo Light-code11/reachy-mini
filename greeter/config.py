@@ -15,6 +15,7 @@ class Settings:
     daemon_url: str = "http://127.0.0.1:8000"
     event_url: str = "https://luma.com/event/evt-ZLcgMdLTqHF8bK3"
     event_name: str = "OpenAI Dev Day"  # spoken: "MLAI welcomes you to the {event_name}!"
+    transcript_port: int = 8780  # translator mode: live transcript page at http://127.0.0.1:8780
     mode: str = "greeter"  # or "translator", "compliment"
 
 
@@ -29,6 +30,7 @@ _OPTIONAL = {
     "EVENT_URL": ("event_url", str),
     "EVENT_NAME": ("event_name", str),
     "REACHY_MODE": ("mode", lambda v: v.lower()),
+    "TRANSCRIPT_PORT": ("transcript_port", int),
 }
 
 
